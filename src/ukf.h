@@ -3,9 +3,16 @@
 
 #include "Eigen/Dense"
 #include "measurement_package.h"
+#include <fstream>
+#include <string>
+#include <vector>
 
-class UKF {
- public:
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
+class UKF
+{
+public:
   /**
    * Constructor
    */
@@ -40,7 +47,6 @@ class UKF {
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
-
 
   // initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -82,7 +88,7 @@ class UKF {
   double std_radphi_;
 
   // Radar measurement noise standard deviation radius change in m/s
-  double std_radrd_ ;
+  double std_radrd_;
 
   // Weights of sigma points
   Eigen::VectorXd weights_;
@@ -95,6 +101,43 @@ class UKF {
 
   // Sigma point spreading parameter
   double lambda_;
+  // NIS of Laser and Lidar
+  double NIS_lidar_;
+  double NIS_radar_;
+
+private:
+  ///* NIS Value writer (used to store NIS values of Radar on csv file)
+  std::fstream NIS_writer_radar_;
+
+  ///* NIS Value writer (used to store NIS values of Laser on csv file)
+  std::fstream NIS_writer_lidar_;
+
+  /**
+   * Normalizes the angle value (provided index) of provided vector
+   * @param {VectorXd &} res  Vector to be look for
+   * @param {int} index       Vector index to be normalized
+   */
+  inline void NormalizeAngle(VectorXd &res, int index);
+
+  /**
+         * Populates Augmented Sigma Points
+         * @param {MatrixXd *} Xsig_out    Augmented Sigma Points
+         */
+  void AugmentedSigmaPoints(MatrixXd *Xsig_out);
+
+  /**
+         * Predicts Sigma Points
+         * @param {MatrixXd *} Xsig_out    Augmented Sigma Points
+         * @param {double} delta_t         timestamp difference
+         */
+  void SigmaPointPrediction(MatrixXd Xsig_aug, double delta_t);
+
+  /**
+         * Predicts mean and covariance matrix for UKF
+         * @param {VectorXd *} x_pred   predicted mean matrix
+         * @param {MatrixXd *} P_pred   predicted covariance matrix
+         */
+  void PredictMeanAndCovariance(VectorXd *x_pred, MatrixXd *P_pred);
 };
 
-#endif  // UKF_H
+#endif // UKF_H
